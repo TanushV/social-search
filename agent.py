@@ -24,8 +24,15 @@ if sys.platform == "win32":
 
 load_dotenv(override=True)
 
-client = OpenAI()
 console = Console()
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = OpenAI()
+    return _client
 
 MODEL = "gpt-5.2-2025-12-11"
 REASONING_EFFORT = "high"
@@ -171,7 +178,7 @@ def call_with_tools(messages, tools, max_iter=10):
     msgs = messages.copy()
     
     for _ in range(max_iter):
-        resp = client.responses.create(
+        resp = _get_client().responses.create(
             model=MODEL, reasoning={"effort": REASONING_EFFORT}, input=msgs, tools=tools or None
         )
         
@@ -192,7 +199,7 @@ def call_with_tools(messages, tools, max_iter=10):
 
 
 def stage1_queries(task, sources):
-    resp = client.responses.create(
+    resp = _get_client().responses.create(
         model=MODEL, reasoning={"effort": "medium"},
         input=[{"role": "user", "content": f"Generate 3 search queries for: {task}\nUsing: {sources}\nOutput JSON array only: [\"q1\", \"q2\", \"q3\"]"}]
     )
@@ -210,7 +217,7 @@ Use tools to search and get posts. Make multiple calls. Write a detailed report 
 
 def stage3_compile(task, reports):
     combined = "\n---\n".join([f"## Report {i+1}\n{r}" for i, r in enumerate(reports)])
-    resp = client.responses.create(
+    resp = _get_client().responses.create(
         model=MODEL, reasoning={"effort": REASONING_EFFORT},
         input=[{"role": "user", "content": f"Compile into final report.\nTask: {task}\n\n{combined}"}]
     )
