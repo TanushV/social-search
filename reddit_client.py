@@ -2,20 +2,26 @@ import os
 from dotenv import load_dotenv
 import praw
 
-load_dotenv()
+load_dotenv(override=True)
 
-reddit = praw.Reddit(
-    client_id=os.getenv("REDDIT_CLIENT_ID"),
-    client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
-    username=os.getenv("REDDIT_USERNAME"),
-    password=os.getenv("REDDIT_PASSWORD"),
-    user_agent="SocialSearch/1.0"
-)
+_reddit = None
+
+def _get_reddit():
+    global _reddit
+    if _reddit is None:
+        _reddit = praw.Reddit(
+            client_id=os.getenv("REDDIT_CLIENT_ID"),
+            client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
+            username=os.getenv("REDDIT_USERNAME"),
+            password=os.getenv("REDDIT_PASSWORD"),
+            user_agent="SocialSearch/1.0"
+        )
+    return _reddit
 
 
 def search_subreddit(subreddit_name, query, limit=10, sort="relevance", time_filter="all"):
     """Search posts in a subreddit."""
-    sub = reddit.subreddit(subreddit_name)
+    sub = _get_reddit().subreddit(subreddit_name)
     return [{
         "id": post.id,
         "title": post.title,
@@ -31,7 +37,7 @@ def search_subreddit(subreddit_name, query, limit=10, sort="relevance", time_fil
 
 def get_post(post_id):
     """Get full post by ID."""
-    post = reddit.submission(id=post_id)
+    post = _get_reddit().submission(id=post_id)
     return {
         "id": post.id,
         "title": post.title,
@@ -47,7 +53,7 @@ def get_post(post_id):
 
 def get_comments(post_id, limit=0):
     """Get comments for a post. limit=0 removes 'more comments' stubs."""
-    post = reddit.submission(id=post_id)
+    post = _get_reddit().submission(id=post_id)
     post.comments.replace_more(limit=limit)
     return [{
         "id": c.id,

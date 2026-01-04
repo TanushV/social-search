@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-load_dotenv()
+load_dotenv(override=True)
 
 PUBLIC_API = "https://public.api.bsky.app/xrpc"
 _client = None
